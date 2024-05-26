@@ -35,5 +35,3 @@ def test_cellule_naissance_mort():
     assert grille[1][2] == 1
     assert grille[3][2] == 1
 
-
-

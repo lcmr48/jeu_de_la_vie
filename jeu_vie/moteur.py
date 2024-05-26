@@ -98,7 +98,6 @@ def cellule_naissance_mort(matrice: list[list[int]]) -> list[list[int]]:
     Returns:
         list[list[int]]: nouveau tableau apres une étape ( un jour )
     """
-    tableau_2 = []
     tableau_fin = []
     mort = 0
     for i in range(len(matrice)):
@@ -113,4 +112,30 @@ def cellule_naissance_mort(matrice: list[list[int]]) -> list[list[int]]:
                 tableau_2[j] = 1
         tableau_fin.append(tableau_2)
     matrice = tableau_fin
+    return matrice
+
+
+def vaisceau(nb_ligne: int, nb_colonne: int) -> list[list[int]]:
+    """crée une matrice de 0 en fonction du nombre de colonne et de ligne
+
+        puis on place les 1 dans la matrices pour configurer
+        un vaisceau dans le jeu de la vie
+
+    Args:
+        nb_ligne (int): nombre de tableau dans la matrice
+        nb_colonne (int): nombre d'élément dans le tableau
+
+    Returns:
+        list[list[int]]: matrice avec le vaisceau
+    """
+    matrice = grille_jeu_de_la_vie(nb_colonne, nb_ligne)
+    matrice[nb_ligne - 2][1] = 1
+    matrice[nb_ligne - 4][1] = 1
+    matrice[nb_ligne - 5][2] = 1
+    matrice[nb_ligne - 5][3] = 1
+    matrice[nb_ligne - 5][4] = 1
+    matrice[nb_ligne - 5][5] = 1
+    matrice[nb_ligne - 4][5] = 1
+    matrice[nb_ligne - 3][5] = 1
+    matrice[nb_ligne - 2][4] = 1
     return matrice

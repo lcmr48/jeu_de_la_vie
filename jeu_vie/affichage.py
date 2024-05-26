@@ -2,12 +2,15 @@
 
 from dataclasses import dataclass
 from tkinter import Canvas, Tk, Button, LEFT
-from moteur import cellule_naissance_mort, placement_aleatoire, grille_jeu_de_la_vie
+from moteur import cellule_naissance_mort, placement_aleatoire, grille_jeu_de_la_vie, vaisceau
 
 
 @dataclass
 class Affichage:
-    """Classe contenant l'etat de l'application"""
+    """Classe contenant l'etat de l'application
+
+    l'utilisation de dataclass permet de créer le constructeur de cette classe automatiquement
+    """
 
     matrice: list[list[int]]  # la matrice contenant les cellules
     formes: list[list[int]]  # une matrice contenant les identifiants des rectangles
@@ -19,7 +22,7 @@ class Affichage:
 
 def dessiner_ligne(x1: int, y1: int, x2: int, y2: int, canvas: Canvas) -> None:
     """
-    affiche une ligne dans le canvas
+    affiche une ligne dans le canvas de largeur 2 pixels
     Args:
         x1 (int): abscisse du point de départ
         y1 (int): ordonnée du point de départ
@@ -27,8 +30,7 @@ def dessiner_ligne(x1: int, y1: int, x2: int, y2: int, canvas: Canvas) -> None:
         y2 (int): ordonnée du point de arrivée
         canvas (Canvas): _description_
     """
-    largeur = 2
-    canvas.create_line(x1, y1, x2, y2, width=largeur, fill="black")
+    canvas.create_line(x1, y1, x2, y2, width=2, fill="black")
 
 
 def grille(ligne: int, colonne: int, taille: int, canvas: Canvas) -> callable:
@@ -72,45 +74,62 @@ def tracer_rectangle(x1: int, y1: int, x2: int, y2: int, canvas: Canvas) -> int:
         canvas (Canvas): presiser le canvas dans lequelle nous travaillons
 
     Returns:
-        int: on retourne l'identifiant du rectangle se qui nous permet de l'identifier
+        int: on retourne l'identifiant du rectangle se qui nous permet de l'identifier plus tard
     """
     return canvas.create_rectangle(x1, y1, x2, y2, fill="white")
+
+
+def clique_forme(affichage: Affichage, x: int, y: int) -> callable:
+    """Cré une fonction qui sera appelé lors du clic sur un rectangle
+
+    la cellelue et le rectangle sont identifiés par ses coordonnées x et y
+
+    Args:
+        y (_type_): indice du tableau dans la matrice
+        x (_type_): indice de l'element dans ce tableau
+    Returns:
+        la fonction appelé lors d'un clic sur un rectangle
+    """
+
+    def clique(_):
+        """fonction appelée lors d'un clic ssur un rectrange
+
+        Args:
+            _: ce paramettre est passé par tkinter lors d'un clic, nous n'en avons pas besoin
+            on l'appelle "_" pour cette raison
+        """
+        # on inverse l'état de la cellule
+        if affichage.matrice[y][x] == 1:
+            affichage.matrice[y][x] = 0
+        else:
+            affichage.matrice[y][x] = 1
+        # et on rafraichi l'interface graphique
+        mise_a_jour_couleur_formes(
+            affichage.matrice, affichage.formes, affichage.canevas
+        )
+
+    return clique
 
 
 def configure_clic_sur_forme(affichage: Affichage) -> None:
     """
     chaque rectangles a un identifiant qui permet de l'identifier, lors d'un clique sur le
-    canvas donc dans un rectangles, un identifiant est donner, nous cherchons a quelle
+    canevas donc dans un rectangles, un identifiant est donner, nous cherchons a quelle
     rectangles il appartient et nous changeons sa couleurs, se qui nous permet de changer
     les couleurs des cases en cliquant dessus.
     Args:
         affichage (Affichage): état de l'application
     """
 
-    def clique_forme(x, y):
-        """
-
-        Args:
-            y (_type_): indice du tableau dans la matrice
-            x (_type_): indice de l'element dans ce tableau
-        """
-
-        def clique(_):
-            if affichage.matrice[y][x] == 1:
-                affichage.matrice[y][x] = 0
-            else:
-                affichage.matrice[y][x] = 1
-            mise_a_jour_couleur_formes(
-                affichage.matrice, affichage.formes, affichage.canevas
-            )
-
-        return clique
-
+    # On boucle sur la matrice pour retrouver nos identifiants de rectangles
+    # sur lesquels nous pouvons appeler la fonction tag_bind qui permet de lui associer
+    # le clic du bouton gauche de la souris
     for ymat, ligne in enumerate(affichage.formes):
-        for xmat, _ in enumerate(ligne):
-            forme = affichage.formes[ymat][xmat]
+        for xmat, identifiant_forme in enumerate(ligne):
+            # on écoute le bouton gauche de la souris qui appelera une fonction créée pour
+            # mettre à jour l'état de la cellule aux coordonnées xmat, ymat
             affichage.canevas.tag_bind(
-                forme, "<Button-1>", func=clique_forme(xmat, ymat)
+                identifiant_forme, "<Button-1>", func=clique_forme(affichage, xmat, ymat)
             )
 
 
@@ -166,7 +185,7 @@ def mise_a_jour_couleur_formes(
             can.itemconfig(id_forme, fill=couleur)
 
 
-def affiche_matrice_aleatoire(affichage: Affichage, densite: float):
+def clique_affiche_matrice_aleatoire(affichage: Affichage, densite: float):
     """
     cette fonction met a jour un cadrillage ou la disposition des cases vivantes ou mortes sera en
     fonction de la densité et placer aléatoirement comme dans la fonction placement_aleatoire
@@ -182,45 +201,64 @@ def affiche_matrice_aleatoire(affichage: Affichage, densite: float):
     return tracer_matrice_alea
 
 
-def avancer(affichage: Affichage) -> callable:
+def avancer(affichage: Affichage) -> None:
+    """Appelle le moteur et met à jour l'affichage
+
+    Appelle cellule_naissance_mort qui met à jour la matrice.
+    Appelle ensuite mise_a_jour_couleur_formes qui raffraichi les couleurs des cellules
+    en fonction de leurs etats
+
+    Args:
+        affichage (Affichage): classe contenant les variables d'affichages et la matricce
     """
-    cette fonction affiche l'etat du cadrillage en fonction de la matrice apres un jour
+    affichage.matrice = cellule_naissance_mort(affichage.matrice)
+    mise_a_jour_couleur_formes(
+        affichage.matrice, affichage.formes, affichage.canevas
+    )
+
+
+def clique_bouton_avancer(affichage: Affichage) -> callable:
+    """cette fonction renvoie une fonction que affiche l'etat du cadrillage
+
+    ceci en fonction de la matrice apres un jour
+
     Args:
         affichage (Affichage): class affichage contenant plusieurs variables
 
     Returns:
-        callable: retourne la fonction avance
+        callable: retourne la fonction avance qui sera appeler lors d'un clic
     """
 
     def avance():
-        affichage.matrice = cellule_naissance_mort(affichage.matrice)
-        mise_a_jour_couleur_formes(
-            affichage.matrice, affichage.formes, affichage.canevas
-        )
+        avancer(affichage)
 
     return avance
 
 
-def avance_auto(affichage: Affichage):
-    """
-    cette fonction affiche l'etat du cadrillage en fonction de la matrice apres un jour sans
-    s'arreter avec une frequence d'avancement de 150ms
+def boucle_avance_auto(affichage: Affichage) -> callable:
+    """Créé une fonction boucle qui se rappelle elle même a intervalle régulier
+
+    Cette fonction avance d'un jour, met à jour l'affichage et utilise tkinter que se lancer elle
+    même à nouveau dans le future.
     Args:
         affichage (Affichage): class affichage contenant plusieurs variables
     """
 
     def boucle():
-        avancer(affichage)()
-        etape_suivante = avance_auto(affichage)
+        # On avance au jour suivant
+        avancer(affichage)
         if affichage.avance_auto:
-            affichage.fenetre.after(150, etape_suivante)
+            # Si l'avance auto est toujours active on utilise tkinter pour
+            # rappeler la fonction boucle dans 150millisecondes dans le future
+            fonction_jour_suivant = boucle
+            affichage.fenetre.after(150, fonction_jour_suivant)
 
     return boucle
 
 
-def depart_arret(affichage: Affichage, bouton: Button):
+def clique_depart_arret(affichage: Affichage, bouton: Button) -> callable:
     """
-    lorsque le bouton est appuyer la fonction avance_auto est appeler et le label du bouton
+    lorsque le bouton est appuyer la fonction depart est appeler et le label du bouton
     change, puis nous pouvons stopper l'avancement en rapuyant sur le bouton
     Args:
         affichage (Affichage): class affichage contenant plusieurs variables
@@ -229,29 +267,57 @@ def depart_arret(affichage: Affichage, bouton: Button):
 
     def depart():
         if affichage.avance_auto is False:
+            # on active l'avancement automatique
             affichage.avance_auto = True
+            # on change le texte du bouton pour indiquer que si on re-appui
+            # on arrête l'avancement auto
             bouton.configure(text="Arrêt")
-            avance_auto(affichage)()
+            # On cré la fonction boucle avec affichage
+            fonction_boucle = boucle_avance_auto(affichage)
+            # on appelle la fonction boucle qui se rappelera elle-même à intervale régulier
+            fonction_boucle()
         else:
+            # on désactive l'avance auto
+            # la fonction boucle arretera de se re-lancer automatiquement
             affichage.avance_auto = False
+            # on change le texte du bouton pour indiquer que si on re-appui
+            # on lance l'avancement auto
             bouton.configure(text="Départ")
 
+    # on renvoie la fonction qui sera appeler par tkinter lors du clic sur le bouton Arrêt/Départ
     return depart
 
 
+def affichage_vaisceau(affichage: Affichage, nb_colonne: int, nb_ligne: int) -> callable:
+    """met a jour la matrice crée dans la fonction vaisceau du moteur
+        grace a la fonction mise_a_jour_couleur_formes
+    Args:
+        affichage (Affichage): class affichage contenant plusieurs variables
+        nb_colonne (int): nombre de colonne de la matrice
+        nb_ligne (int): nombre de ligne de la matrice
+
+    Returns:
+        callable: retourne affiche_vaisceau
+    """
+    def affiche_vaisceau():
+        affichage.matrice = vaisceau(nb_ligne, nb_colonne)
+        mise_a_jour_couleur_formes(affichage.matrice, affichage.formes, affichage.canevas)
+    return affiche_vaisceau
+
+
 def main() -> None:
-    """
-    fonction principale
-    """
     fenetre = Tk()
     taille = 700
-    nb_ligne = 20
-    nb_colonne = 20
+    nb_ligne = 50
+    nb_colonne = 50
     densite = 0.5
+    # Cré la matrice contenant les cellules
     matrice = grille_jeu_de_la_vie(nb_ligne, nb_colonne)
     can1 = Canvas(fenetre, bg="white", height=taille, width=taille)
     can1.pack(side=LEFT)
     grille(nb_ligne, nb_colonne, taille, can1)
+    # Trace des rectangles dans la grille et renvoi une matrice de meme taille
+    # que la matrice des cellule et contenant les identifiants des rectangles créés
     matrice_formes = trace_formes(nb_ligne, nb_colonne, taille, can1)
     affichage = Affichage(
         matrice=matrice,
@@ -259,23 +325,30 @@ def main() -> None:
         taille=taille,
         canevas=can1,
         fenetre=fenetre,
-    )
+        )
     configure_clic_sur_forme(affichage)
 
     bouton_point = Button(
-        fenetre, text="Aléatoire", command=affiche_matrice_aleatoire(affichage, densite)
+        fenetre, text="Aléatoire", command=clique_affiche_matrice_aleatoire(affichage, densite)
     )
     bouton_point.pack()
 
-    bouton_avancer = Button(fenetre, text="Avancer", command=avancer(affichage))
+    bouton_avancer = Button(fenetre, text="Avancer", command=clique_bouton_avancer(affichage))
     bouton_avancer.pack()
 
     bouton_depart_arret = Button(fenetre, text="Depart")
-    bouton_depart_arret.configure(command=depart_arret(affichage, bouton_depart_arret))
+    bouton_depart_arret.configure(command=clique_depart_arret(affichage, bouton_depart_arret))
     bouton_depart_arret.pack()
 
+    bouton_vaisceau = Button(fenetre,
+                             text='configurer un vaisceau',
+                             command=affichage_vaisceau(affichage, nb_colonne, nb_ligne))
+    bouton_vaisceau.pack()
     fenetre.mainloop()
 
 
 if __name__ == "__main__":
+    # technique utilisé pour éviter de lancer l'affichage
+    # si le fichier est importer par un autre module
+    # https://docs.python.org/fr/3.8/library/__main__.html
     main()
