@@ -1,32 +1,33 @@
 """Moteur du jeux."""
 
 import random
+from typing import List
 
 
-def grille_jeu_de_la_vie(y: int, x: int) -> list[list[int]]:
+def grille_jeu_de_la_vie(y: int, x: int) -> List[List[int]]:
     """
     créer une matrice qui représente la grille du jeu de la vie avec 0 = mort et 1 = vivant
 
-    Args:
+    arguments:
         y (int): nombre de tableaux dans matrice
         x (int): nombre d'elements par tableaux
 
-    Returns:
-        list[list[int]]: matrice contenant des 0
+    retournes:
+        List[List[int]]: matrice contenant des 0
     """
     return [[0 for i in range(x)] for j in range(y)]
 
 
-def placement_aleatoire(matrice: list[list[int]], densite: float) -> list[list[int]]:
+def placement_aleatoire(matrice: List[List[int]], densite: float) -> List[List[int]]:
     """
     place aleatoirement une densité de 1 dans la matrice remplie préalablement de 0
 
-    Args:
-        matrice (list[list[int]]): matrice contenant des 0
-        densite (float): pourcatage de nombre 1 dans la matrice
+    arguments:
+        matrice (List[List[int]]): matrice contenant des 0
+        densite (float): pourcentage de nombre 1 dans la matrice
 
-    Returns:
-        list[list[int]]: matrice avec une densité de 1 donner et placer aléatoirement
+    retournes:
+        List[List[int]]: matrice avec une densité de 1 donner et placer aléatoirement
     """
     for y in range(len(matrice)):
         for x in range(len(matrice[y])):
@@ -37,16 +38,16 @@ def placement_aleatoire(matrice: list[list[int]], densite: float) -> list[list[i
     return matrice
 
 
-def voisin_case(y: int, x: int, matrice: list[list[int]]):
+def voisin_case(y: int, x: int, matrice: List[List[int]]):
     """
     cherche le nombre de voisin d'une case donnée en parametre et le retourne en un entier
 
-    Args:
+    arguments:
         y (int): indice du tableau ou se trouve l'élement
         x (int): indice element dont nous voulons savoir le nombre de voisin dans le tableau
-        matrice (list[list[int]]): _description_
+        matrice (List[List[int]]): _description_
 
-    Returns:
+    retournes:
         _type_: nombre de voisin de la case
     """
     nb_voisin = 0
@@ -69,14 +70,14 @@ def voisin_case(y: int, x: int, matrice: list[list[int]]):
     return nb_voisin
 
 
-def somme_matrice(matrice: list[list[int]]) -> int:
+def somme_matrice(matrice: List[List[int]]) -> int:
     """
     renvoie le somme du nombre d'indice dans la matrice
 
-    Args:
-        matrice (list[list[int]]): matrice représentant la grille
+    arguments:
+        matrice (List[List[int]]): matrice représentant la grille
 
-    Returns:
+    retournes:
         int: nombre d'element de la matrice
     """
     n = 0
@@ -88,15 +89,15 @@ def somme_matrice(matrice: list[list[int]]) -> int:
 
 
 # une cellule meurt si elle possède moins de deux ou plus de trois cases voisines vivantes
-def cellule_naissance_mort(matrice: list[list[int]]) -> list[list[int]]:
+def cellule_naissance_mort(matrice: List[List[int]]) -> List[List[int]]:
     """
     effectue l'équivalent d'une journée avec la matrice en argument et renvoie la matrice
     aprees une journée en respectant les regles du jeu de la vie et les cases sont des indices.
-    Args:
-        matrice (list[list[int]]): matrice représentant la grille
+    arguments:
+        matrice (List[List[int]]): matrice représentant la grille
 
-    Returns:
-        list[list[int]]: nouveau tableau apres une étape ( un jour )
+    retournes:
+        List[List[int]]: nouveau tableau apres une étape ( un jour )
     """
     tableau_fin = []
     mort = 0
@@ -115,18 +116,18 @@ def cellule_naissance_mort(matrice: list[list[int]]) -> list[list[int]]:
     return matrice
 
 
-def vaisceau(nb_ligne: int, nb_colonne: int) -> list[list[int]]:
+def vaisceau(nb_ligne: int, nb_colonne: int) -> List[List[int]]:
     """crée une matrice de 0 en fonction du nombre de colonne et de ligne
 
         puis on place les 1 dans la matrices pour configurer
         un vaisceau dans le jeu de la vie
 
-    Args:
+    arguments:
         nb_ligne (int): nombre de tableau dans la matrice
         nb_colonne (int): nombre d'élément dans le tableau
 
-    Returns:
-        list[list[int]]: matrice avec le vaisceau
+    retournes:
+        List[List[int]]: matrice avec le vaisceau
     """
     matrice = grille_jeu_de_la_vie(nb_colonne, nb_ligne)
     matrice[nb_ligne - 2][1] = 1
